@@ -87,6 +87,8 @@ Enjoy!
 :date:   2009-11-21
 """
 
+__version__ = '1.0'
+
 import struct
 
 DEFAULT_SERVICE_DIR = "/var/service" # change for daemontools
