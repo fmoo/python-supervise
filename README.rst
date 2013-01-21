@@ -1,7 +1,7 @@
 Python supervise
 ----------------
-This module provide a methods to handle runit [1]_ or daemontools [2]_ based
-supervised services, using the control file provided. Here are a small
+This module provide a methods to handle runit_ or daemontools_ based
+supervised services, using the control file provided.  Here is a small
 example::
 
     >>> import supervise
@@ -13,7 +13,7 @@ example::
     {'action': None, 'status': 1, 'uptime': 3L, 'pid': 27450}
 
 Read the manpage of runsv(8) for more information. Also read the
-documentation for :class:`ServiceStatus` to known how to parse status
+documentation for `ServiceStatus` to known how to parse status
 information.
 
 History
@@ -75,8 +75,9 @@ http://localhost/service/down/httpd (to down http service in this case).
 
 Enjoy!
 
-.. [1] http://smarden.org/runit/
-.. [2] http://cr.yp.to/daemontools.html
+.. _runit: http://smarden.org/runit/
+.. _daemontools: http://cr.yp.to/daemontools.html
 
 :author: Andres J. Diaz <ajdiaz@connectical.com>
 :date:   2009-11-21
+:maintainer: Peter Ruibal <ruibalp@gmail.com>
