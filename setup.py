@@ -38,6 +38,6 @@ setup(
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Topic :: Software Development :: Libraries",
-        #"License :: OSI Approved :: ISC License (ISCL)",
+        "License :: OSI Approved :: ISC License (ISCL)",
     ],
 )
