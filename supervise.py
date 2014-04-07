@@ -89,15 +89,12 @@ Enjoy!
 
 __version__ = '1.0'
 
+import os
 import struct
 
 DEFAULT_SERVICE_DIR = "/var/service" # change for daemontools
 
-try:
-    import os
-    DEFAULT_SERVICE_DIR = os.getenv("SERVICE_DIR")
-except:
-    pass
+DEFAULT_SERVICE_DIR = os.getenv("SERVICE_DIR", DEFAULT_SERVICE_DIR)
 
 DEFAULT_EPOCH = 4611686018427387914L
 
