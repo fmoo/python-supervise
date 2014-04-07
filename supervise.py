@@ -90,6 +90,7 @@ Enjoy!
 __version__ = '1.0'
 
 import os
+import time
 import struct
 
 DEFAULT_SERVICE_DIR = "/var/service" # change for daemontools
@@ -318,16 +319,8 @@ class Service(object):
         if pid and want == 'd': action = WANT_DOWN
         if pid and term: action = GOT_TERM
 
-        # When is now?
-        try:
-            import time
-            n = long(time.time()) + DEFAULT_EPOCH
-
-            x = seconds
-
-            x = 0 if n < x else (n - x)
-        except ImportError:
-            return ServiceStatus( status=status, pid=pid, action=action )
+        now = long(time.time()) + DEFAULT_EPOCH
+        seconds = 0 if now < seconds else (now - seconds)
 
         return ServiceStatus( status=status, pid=pid, action=action,
-                uptime=x )
+                uptime=seconds )
