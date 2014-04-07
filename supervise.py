@@ -288,47 +288,42 @@ class Service(object):
             reached (means downtime for STATUS_DOWN).
 
         """
-        byte = struct.Struct("20B")
-
         s = open(self._status,"rb").read(20)
-        s = byte.unpack_from(s)
+        if len(s) == 18:
+            seconds, nano, pid, paused, want = struct.unpack(">qllbc", s)
+            term, finish = 0, 0
+        elif len(s) == 20:
+            seconds, nano, pid, paused, want, term, finish = struct.unpack(">qllbcbb", s)
+        else:
+            raise AssertionError("Unknown status format")
 
+        # pid is returned little-endian. Flip it.
+        pid, = struct.unpack("<l", struct.pack(">l", pid))
 
-        pid = s[15]
-        pid <<=8; pid += s[14]
-        pid <<=8; pid += s[13]
-        pid <<=8; pid += s[12]
         normallyup = os.path.exists(self.service + "/down")
 
-        if pid:
-            if s[19] == 1: status = STATUS_UP
-            if s[19] == 2: status = STATUS_FINISH
+        if pid > 0:
+            status = STATUS_UP
+            if finish == 2:
+                status = STATUS_FINISH
         else:
             pid = None
             status = STATUS_DOWN
 
-        action = None # never happend
+        action = None
         if pid and not normallyup: action = NORMALLY_DOWN
         if not pid and normallyup: action = NORMALLY_UP
-        if pid and s[16]: action = PAUSED
-        if not pid and s[17] == 'u': action = WANT_UP
-        if pid and s[17] == 'd': action = WANT_DOWN
-        if pid and s[18]: action = GOT_TERM
+        if pid and paused: action = PAUSED
+        if not pid and want == 'u': action = WANT_UP
+        if pid and want == 'd': action = WANT_DOWN
+        if pid and term: action = GOT_TERM
 
         # When is now?
         try:
             import time
             n = long(time.time()) + DEFAULT_EPOCH
 
-            # Get timestamp (8B = seconds)
-            x = s[0];
-            x <<= 8; x += s[1];
-            x <<= 8; x += s[2];
-            x <<= 8; x += s[3];
-            x <<= 8; x += s[4];
-            x <<= 8; x += s[5];
-            x <<= 8; x += s[6];
-            x <<= 8; x += s[7];
+            x = seconds
 
             x = 0 if n < x else (n - x)
         except ImportError:
