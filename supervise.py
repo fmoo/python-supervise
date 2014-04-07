@@ -289,22 +289,16 @@ class Service(object):
 
         """
         byte = struct.Struct("20B")
-        normallyup = 0
 
         s = open(self._status,"rb").read(20)
         s = byte.unpack_from(s)
 
-        try:
-            f = open(self.service + "/down","r")
-            f.close()
-        except IOError:
-            # TODO catch ENOENT versus other errors
-            normallyup = 1
 
         pid = s[15]
         pid <<=8; pid += s[14]
         pid <<=8; pid += s[13]
         pid <<=8; pid += s[12]
+        normallyup = os.path.exists(self.service + "/down")
 
         if pid:
             if s[19] == 1: status = STATUS_UP
