@@ -93,7 +93,7 @@ import os
 import time
 import struct
 
-DEFAULT_SERVICE_DIR = "/var/service" # change for daemontools
+DEFAULT_SERVICE_DIR = "/var/service"  # change for daemontools
 
 DEFAULT_SERVICE_DIR = os.getenv("SERVICE_DIR", DEFAULT_SERVICE_DIR)
 
@@ -115,7 +115,7 @@ class ServiceStatus(object):
     supervisor. """
     def __init__(self, *args, **kwargs):
         """
-        You can intialize this function passing arguments in the form
+        You can initialize this function passing arguments in the form
         *argument*=*value*, these properties will be stored on object.
         Example::
 
@@ -136,7 +136,7 @@ class ServiceStatus(object):
             an exception is raised.
         :param time: return a timestamp when last action performs.
         """
-        map(lambda x: setattr(self,x[0],x[1]), kwargs.items())
+        map(lambda x: setattr(self, x[0], x[1]), kwargs.items())
 
     def _status2str(self, status):
         if not status:
@@ -154,7 +154,7 @@ class ServiceStatus(object):
         if action == NORMALLY_DOWN:
             return "normally down"
         if action == NORMALLY_UP:
-            return "normally up2"
+            return "normally up"
         if action == PAUSED:
             return "paused"
         if action == WANT_UP:
@@ -166,7 +166,7 @@ class ServiceStatus(object):
 
     def __iter__(self):
         for item in filter(lambda x: x[0]!='_', dir(self)):
-            yield ( item, getattr(self,item,None) )
+            yield (item, getattr(self,item,None))
 
     def __str__(self):
         _d = dict()
@@ -220,14 +220,14 @@ class Service(object):
         self._signal("t")
 
     def exit(self):
-          """ If  the  service  is running, send it a TERM signal, and
-          then a CONT signal.  Do not restart the service.  If the service
-          is down, and no log service exists, runsv exits.  If the service
-          is down and a log service  exists,  runsv  closes  the  standard
-          input of the log service, and waits for it to terminate.  If the
-          log service is down, runsv exits.  This command is ignored if it
-          is given to service/log/supervise/control."""
-          self._signal("x")
+        """ If  the  service  is running, send it a TERM signal, and
+        then a CONT signal.  Do not restart the service.  If the service
+        is down, and no log service exists, runsv exits.  If the service
+        is down and a log service  exists,  runsv  closes  the  standard
+        input of the log service, and waits for it to terminate.  If the
+        log service is down, runsv exits.  This command is ignored if it
+        is given to service/log/supervise/control."""
+        self._signal("x")
 
     def kill(self):
         """ If the service is running, send it a  KILL signal. """
@@ -275,14 +275,14 @@ class Service(object):
         """ Read the status of a service using status binary form. Returns
         an object :class:`ServiceStatus` with properly information.
 
-        This function handle the follwing status code to be parsed:
+        This function handle the following status code to be parsed:
 
         :param status: must be one numerical code to identify the service status,
             STATUS_UP(1), STATUS_DOWN(0) or STATUS_FINISH(2).
         :param action: print the action in what supervisor is working to change
             the state, it can be NORMALLY_UP(1), NORMALLY_DOWN(0),
             PAUSED(2), WANT_UP(17), WANT_DOWN(16), GOT_TERM(9). If no work
-            in progress this value is setted to None.
+            in progress this value is set to None.
         :param pid: contains the numeric PID of the service process, must be None
             if process status is STATUS_DOWN.
         :param uptime: contain the number of seconds since the last status is
@@ -312,15 +312,20 @@ class Service(object):
             status = STATUS_DOWN
 
         action = None
-        if pid and not normallyup: action = NORMALLY_DOWN
-        if not pid and normallyup: action = NORMALLY_UP
-        if pid and paused: action = PAUSED
-        if not pid and want == 'u': action = WANT_UP
-        if pid and want == 'd': action = WANT_DOWN
-        if pid and term: action = GOT_TERM
+        if pid and not normallyup:
+            action = NORMALLY_DOWN
+        if not pid and normallyup:
+            action = NORMALLY_UP
+        if pid and paused:
+            action = PAUSED
+        if not pid and want == 'u':
+            action = WANT_UP
+        if pid and want == 'd':
+            action = WANT_DOWN
+        if pid and term:
+            action = GOT_TERM
 
         now = long(time.time()) + DEFAULT_EPOCH
         seconds = 0 if now < seconds else (now - seconds)
 
-        return ServiceStatus( status=status, pid=pid, action=action,
-                uptime=seconds )
+        return ServiceStatus(status=status, pid=pid, action=action, uptime=seconds)
