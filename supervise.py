@@ -139,7 +139,7 @@ class ServiceStatus(object):
         map(lambda x: setattr(self, x[0], x[1]), kwargs.items())
 
     def _status2str(self, status):
-        if not status:
+        if status is None:
             return "unknown"
         if status == STATUS_DOWN:
             return "down"
@@ -149,7 +149,7 @@ class ServiceStatus(object):
             return "finish"
 
     def _action2str(self, action):
-        if not action:
+        if action is None:
             return "normal"
         if action == NORMALLY_DOWN:
             return "normally down"
