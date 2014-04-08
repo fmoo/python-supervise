@@ -28,7 +28,7 @@ setup(
     author_email='ajdiaz@connectical.com',
     maintainer='Peter Ruibal',
     maintainer_email='ruibalp@gmail.com',
-    #license='ISC',
+    license='ISC',
     keywords='supervise runit daemontools',
     url='http://github.com/fmoo/python-supervise',
     download_url='https://github.com/fmoo/python-supervise/archive/%s.tar.gz' % VERSION,
