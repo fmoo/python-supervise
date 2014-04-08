@@ -89,15 +89,13 @@ Enjoy!
 
 __version__ = '1.0'
 
+import os
+import time
 import struct
 
-DEFAULT_SERVICE_DIR = "/var/service" # change for daemontools
+DEFAULT_SERVICE_DIR = "/var/service"  # change for daemontools
 
-try:
-    import os
-    DEFAULT_SERVICE_DIR = os.getenv("SERVICE_DIR")
-except:
-    pass
+DEFAULT_SERVICE_DIR = os.getenv("SERVICE_DIR", DEFAULT_SERVICE_DIR)
 
 DEFAULT_EPOCH = 4611686018427387914L
 
@@ -117,7 +115,7 @@ class ServiceStatus(object):
     supervisor. """
     def __init__(self, *args, **kwargs):
         """
-        You can intialize this function passing arguments in the form
+        You can initialize this function passing arguments in the form
         *argument*=*value*, these properties will be stored on object.
         Example::
 
@@ -138,10 +136,10 @@ class ServiceStatus(object):
             an exception is raised.
         :param time: return a timestamp when last action performs.
         """
-        map(lambda x: setattr(self,x[0],x[1]), kwargs.items())
+        map(lambda x: setattr(self, x[0], x[1]), kwargs.items())
 
     def _status2str(self, status):
-        if not status:
+        if status is None:
             return "unknown"
         if status == STATUS_DOWN:
             return "down"
@@ -151,12 +149,12 @@ class ServiceStatus(object):
             return "finish"
 
     def _action2str(self, action):
-        if not action:
+        if action is None:
             return "normal"
         if action == NORMALLY_DOWN:
             return "normally down"
         if action == NORMALLY_UP:
-            return "normally up2"
+            return "normally up"
         if action == PAUSED:
             return "paused"
         if action == WANT_UP:
@@ -168,7 +166,7 @@ class ServiceStatus(object):
 
     def __iter__(self):
         for item in filter(lambda x: x[0]!='_', dir(self)):
-            yield ( item, getattr(self,item,None) )
+            yield (item, getattr(self,item,None))
 
     def __str__(self):
         _d = dict()
@@ -222,14 +220,14 @@ class Service(object):
         self._signal("t")
 
     def exit(self):
-          """ If  the  service  is running, send it a TERM signal, and
-          then a CONT signal.  Do not restart the service.  If the service
-          is down, and no log service exists, runsv exits.  If the service
-          is down and a log service  exists,  runsv  closes  the  standard
-          input of the log service, and waits for it to terminate.  If the
-          log service is down, runsv exits.  This command is ignored if it
-          is given to service/log/supervise/control."""
-          self._signal("x")
+        """ If  the  service  is running, send it a TERM signal, and
+        then a CONT signal.  Do not restart the service.  If the service
+        is down, and no log service exists, runsv exits.  If the service
+        is down and a log service  exists,  runsv  closes  the  standard
+        input of the log service, and waits for it to terminate.  If the
+        log service is down, runsv exits.  This command is ignored if it
+        is given to service/log/supervise/control."""
+        self._signal("x")
 
     def kill(self):
         """ If the service is running, send it a  KILL signal. """
@@ -277,71 +275,57 @@ class Service(object):
         """ Read the status of a service using status binary form. Returns
         an object :class:`ServiceStatus` with properly information.
 
-        This function handle the follwing status code to be parsed:
+        This function handle the following status code to be parsed:
 
         :param status: must be one numerical code to identify the service status,
             STATUS_UP(1), STATUS_DOWN(0) or STATUS_FINISH(2).
         :param action: print the action in what supervisor is working to change
             the state, it can be NORMALLY_UP(1), NORMALLY_DOWN(0),
             PAUSED(2), WANT_UP(17), WANT_DOWN(16), GOT_TERM(9). If no work
-            in progress this value is setted to None.
+            in progress this value is set to None.
         :param pid: contains the numeric PID of the service process, must be None
             if process status is STATUS_DOWN.
         :param uptime: contain the number of seconds since the last status is
             reached (means downtime for STATUS_DOWN).
 
         """
-        byte = struct.Struct("20B")
-        normallyup = 0
-
         s = open(self._status,"rb").read(20)
-        s = byte.unpack_from(s)
+        if len(s) == 18:
+            seconds, nano, pid, paused, want = struct.unpack(">qllbc", s)
+            term, finish = 0, 0
+        elif len(s) == 20:
+            seconds, nano, pid, paused, want, term, finish = struct.unpack(">qllbcbb", s)
+        else:
+            raise AssertionError("Unknown status format")
 
-        try:
-            f = open(self.service + "/down","r")
-            f.close()
-        except IOError:
-            # TODO catch ENOENT versus other errors
-            normallyup = 1
+        # pid is returned little-endian. Flip it.
+        pid, = struct.unpack("<l", struct.pack(">l", pid))
 
-        pid = s[15]
-        pid <<=8; pid += s[14]
-        pid <<=8; pid += s[13]
-        pid <<=8; pid += s[12]
+        normallyup = os.path.exists(self.service + "/down")
 
-        if pid:
-            if s[19] == 1: status = STATUS_UP
-            if s[19] == 2: status = STATUS_FINISH
+        if pid > 0:
+            status = STATUS_UP
+            if finish == 2:
+                status = STATUS_FINISH
         else:
             pid = None
             status = STATUS_DOWN
 
-        action = None # never happend
-        if pid and not normallyup: action = NORMALLY_DOWN
-        if not pid and normallyup: action = NORMALLY_UP
-        if pid and s[16]: action = PAUSED
-        if not pid and s[17] == 'u': action = WANT_UP
-        if pid and s[17] == 'd': action = WANT_DOWN
-        if pid and s[18]: action = GOT_TERM
+        action = None
+        if pid and not normallyup:
+            action = NORMALLY_DOWN
+        if not pid and normallyup:
+            action = NORMALLY_UP
+        if pid and paused:
+            action = PAUSED
+        if not pid and want == 'u':
+            action = WANT_UP
+        if pid and want == 'd':
+            action = WANT_DOWN
+        if pid and term:
+            action = GOT_TERM
 
-        # When is now?
-        try:
-            import time
-            n = long(time.time()) + DEFAULT_EPOCH
+        now = long(time.time()) + DEFAULT_EPOCH
+        seconds = 0 if now < seconds else (now - seconds)
 
-            # Get timestamp (8B = seconds)
-            x = s[0];
-            x <<= 8; x += s[1];
-            x <<= 8; x += s[2];
-            x <<= 8; x += s[3];
-            x <<= 8; x += s[4];
-            x <<= 8; x += s[5];
-            x <<= 8; x += s[6];
-            x <<= 8; x += s[7];
-
-            x = 0 if n < x else (n - x)
-        except ImportError:
-            return ServiceStatus( status=status, pid=pid, action=action )
-
-        return ServiceStatus( status=status, pid=pid, action=action,
-                uptime=x )
+        return ServiceStatus(status=status, pid=pid, action=action, uptime=seconds)
