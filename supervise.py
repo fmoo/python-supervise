@@ -87,7 +87,7 @@ Enjoy!
 :date:   2009-11-21
 """
 
-__version__ = '1.0'
+__version__ = '1.1'
 
 import os
 import time
