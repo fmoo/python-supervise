@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 import os.path
 import imp
 
@@ -18,7 +18,7 @@ VERSION = version()
 setup(
     name="supervise",
     version=VERSION,
-    packages=find_packages(),
+    py_modules=["supervise"],
     description="Tools for communicating with runit / daemontools supervisors.",
     long_description=read("README.rst"),
 
